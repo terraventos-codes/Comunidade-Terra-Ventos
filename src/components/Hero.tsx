@@ -292,14 +292,16 @@ export default function Hero({ onContactClick }: HeroProps) {
                   ease: [0.25, 0.46, 0.45, 0.94],
                 }}
               >
-                <motion.button
-                  onClick={onContactClick}
+                <motion.a
+                  href="https://chat.whatsapp.com/IRDTyn0rKIXLVGQNqPkzQ8"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="bg-accent-500 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg text-base sm:text-lg font-semibold hover:bg-accent-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 font-avenir w-full sm:w-auto"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   {t("hero.cta")}
-                </motion.button>
+                </motion.a>
                 <motion.a
                   href="#por-que-fazer-parte"
                   className="border-2 border-white/30 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg text-base sm:text-lg font-semibold hover:bg-white/10 transition-all duration-300 backdrop-blur-sm font-avenir w-full sm:w-auto"

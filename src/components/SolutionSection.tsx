@@ -109,8 +109,10 @@ export default function SolutionSection() {
             {t("solution.connections.description")}
           </motion.p>
 
-          <motion.button
-            onClick={scrollToForm}
+          <motion.a
+            href="https://chat.whatsapp.com/IRDTyn0rKIXLVGQNqPkzQ8"
+            target="_blank"
+            rel="noopener noreferrer"
             className="bg-accent-500 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-accent-600 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 font-avenir cursor-pointer"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -124,7 +126,7 @@ export default function SolutionSection() {
             whileTap={{ scale: 0.95 }}
           >
             {t("solution.see.how")}
-          </motion.button>
+          </motion.a>
         </div>
       </div>
     </motion.section>

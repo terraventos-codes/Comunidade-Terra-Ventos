@@ -67,8 +67,10 @@ export default function Navbar({ onContactClick }: NavbarProps) {
                   {link.text}
                 </motion.button>
               ))}
-              <motion.button
-                onClick={onContactClick}
+              <motion.a
+                href="https://chat.whatsapp.com/IRDTyn0rKIXLVGQNqPkzQ8"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="bg-accent-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-accent-600 transition-colors"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -77,7 +79,7 @@ export default function Navbar({ onContactClick }: NavbarProps) {
                 whileTap={{ scale: 0.95 }}
               >
                 {t("nav.join-community")}
-              </motion.button>
+              </motion.a>
               <LanguageSelector />
             </div>
           </div>
@@ -153,15 +155,17 @@ export default function Navbar({ onContactClick }: NavbarProps) {
                   {link.text}
                 </motion.button>
               ))}
-              <motion.button
-                onClick={onContactClick}
+              <motion.a
+                href="https://chat.whatsapp.com/IRDTyn0rKIXLVGQNqPkzQ8"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="bg-accent-500 text-white block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-accent-600 transition-colors"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.4 }}
               >
                 {t("nav.join-community")}
-              </motion.button>
+              </motion.a>
             </div>
           </motion.div>
         )}
