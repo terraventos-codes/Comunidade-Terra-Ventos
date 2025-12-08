@@ -23,10 +23,12 @@ export async function POST(req: Request) {
         name: body.name,
         email: body.email,
         mobile_phone: body.mobile_phone,
+        // Origem do lead - necessário para não aparecer como "Desconhecido"
+        traffic_source: body.traffic_source || "Comunidade Terra Ventos",
+        source: body.traffic_source || "Comunidade Terra Ventos",
 
         // 🔥 CAMPOS CUSTOMIZADOS → precisam estar aqui!
         custom_fields: {
-          traffic_source: body.traffic_source,
           investment_range: body.investment_range,
           main_interest: body.main_interest,
         },
