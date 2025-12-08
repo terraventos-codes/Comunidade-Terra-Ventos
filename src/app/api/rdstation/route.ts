@@ -22,13 +22,20 @@ export async function POST(req: Request) {
       name: body.name,
       email: body.email,
       personal_phone: body.mobile_phone,
-      // Definir a origem do lead (campo de sistema)
+      // Definir a origem do lead - campos de tráfego completos
       traffic_source: trafficSource,
-      source: trafficSource,
+      traffic_medium: "website",
+      traffic_campaign: "Formulario Terra Ventos",
+      // Tentar também com funnel.origin
+      funnel: {
+        origin: trafficSource,
+      },
       // Campos customizados
       custom_fields: {
         // Campo personalizado "Origem do Lead" (seleção múltipla)
-        origem_do_lead: trafficSource, // Valor deve corresponder a uma das opções configuradas
+        // Tentar diferentes variações do nome do campo
+        origem_do_lead: trafficSource,
+        "Origem do Lead": trafficSource, // Nome exato como aparece no RD
         investment_range: body.investment_range,
         main_interest: body.main_interest,
       },
@@ -45,6 +52,13 @@ export async function POST(req: Request) {
     });
 
     const contactResult = await contactResponse.json();
+    
+    // Log para debug
+    if (!contactResponse.ok) {
+      console.error("Erro ao criar contato:", contactResult);
+    } else {
+      console.log("Contato criado/atualizado:", contactResult);
+    }
 
     // 2. Depois, enviar o evento de conversão
     const EVENTS_API_URL = "https://api.rd.services/platform/events";
@@ -57,12 +71,16 @@ export async function POST(req: Request) {
         name: body.name,
         email: body.email,
         mobile_phone: body.mobile_phone,
-        // Incluir origem também no evento
+        // Incluir origem também no evento - campos de tráfego completos
         traffic_source: trafficSource,
+        traffic_medium: "website",
+        traffic_campaign: "Formulario Terra Ventos",
         source: trafficSource,
         custom_fields: {
           // Campo personalizado "Origem do Lead" (seleção múltipla)
-          origem_do_lead: trafficSource, // Valor deve corresponder a uma das opções configuradas
+          // Tentar diferentes variações do nome do campo
+          origem_do_lead: trafficSource,
+          "Origem do Lead": trafficSource, // Nome exato como aparece no RD
           investment_range: body.investment_range,
           main_interest: body.main_interest,
         },
@@ -79,6 +97,13 @@ export async function POST(req: Request) {
     });
 
     const eventResult = await eventResponse.json();
+    
+    // Log para debug
+    if (!eventResponse.ok) {
+      console.error("Erro ao enviar evento:", eventResult);
+    } else {
+      console.log("Evento enviado:", eventResult);
+    }
 
     if (!contactResponse.ok && !eventResponse.ok) {
       console.error("Erro RD - Contato:", contactResult);
