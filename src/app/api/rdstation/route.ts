@@ -18,46 +18,48 @@ export async function POST(req: Request) {
     // 1. Primeiro, criar/atualizar o contato com a origem usando a API de contatos
     const CONTACTS_API_URL = "https://api.rd.services/platform/contacts";
     
-    const contactPayload = {
+    const contactPayload: any = {
       name: body.name,
       email: body.email,
       personal_phone: body.mobile_phone,
-      // Definir a origem do lead - campos de tráfego completos
-      traffic_source: trafficSource,
-      traffic_medium: "website",
-      traffic_campaign: "Formulario Terra Ventos",
-      // Tentar também com funnel.origin
-      funnel: {
-        origin: trafficSource,
-      },
       // Campos customizados
       custom_fields: {
-        // Campo personalizado "Origem do Lead" (seleção múltipla)
-        // Tentar diferentes variações do nome do campo
-        origem_do_lead: trafficSource,
-        "Origem do Lead": trafficSource, // Nome exato como aparece no RD
         investment_range: body.investment_range,
         main_interest: body.main_interest,
       },
     };
 
-    // Criar ou atualizar contato
-    const contactResponse = await fetch(CONTACTS_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${rdToken}`,
-      },
-      body: JSON.stringify(contactPayload),
-    });
+    // Adicionar origem do lead no campo personalizado (tentar diferentes nomes)
+    if (trafficSource) {
+      contactPayload.custom_fields.origem_do_lead = trafficSource;
+    }
 
-    const contactResult = await contactResponse.json();
-    
-    // Log para debug
-    if (!contactResponse.ok) {
-      console.error("Erro ao criar contato:", contactResult);
-    } else {
-      console.log("Contato criado/atualizado:", contactResult);
+    let contactResult: any = null;
+    let contactError: any = null;
+
+    try {
+      // Criar ou atualizar contato
+      const contactResponse = await fetch(CONTACTS_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${rdToken}`,
+        },
+        body: JSON.stringify(contactPayload),
+      });
+
+      contactResult = await contactResponse.json();
+      
+      // Log para debug
+      if (!contactResponse.ok) {
+        console.error("Erro ao criar contato:", contactResult);
+        contactError = contactResult;
+      } else {
+        console.log("Contato criado/atualizado:", contactResult);
+      }
+    } catch (error) {
+      console.error("Erro ao chamar API de contatos:", error);
+      contactError = error;
     }
 
     // 2. Depois, enviar o evento de conversão
@@ -71,16 +73,12 @@ export async function POST(req: Request) {
         name: body.name,
         email: body.email,
         mobile_phone: body.mobile_phone,
-        // Incluir origem também no evento - campos de tráfego completos
+        // Incluir origem no evento
         traffic_source: trafficSource,
         traffic_medium: "website",
-        traffic_campaign: "Formulario Terra Ventos",
-        source: trafficSource,
         custom_fields: {
           // Campo personalizado "Origem do Lead" (seleção múltipla)
-          // Tentar diferentes variações do nome do campo
           origem_do_lead: trafficSource,
-          "Origem do Lead": trafficSource, // Nome exato como aparece no RD
           investment_range: body.investment_range,
           main_interest: body.main_interest,
         },
@@ -96,32 +94,45 @@ export async function POST(req: Request) {
       body: JSON.stringify(eventPayload),
     });
 
-    const eventResult = await eventResponse.json();
-    
-    // Log para debug
-    if (!eventResponse.ok) {
-      console.error("Erro ao enviar evento:", eventResult);
-    } else {
-      console.log("Evento enviado:", eventResult);
+    let eventResult: any = null;
+    let eventError: any = null;
+
+    try {
+      eventResult = await eventResponse.json();
+      
+      // Log para debug
+      if (!eventResponse.ok) {
+        console.error("Erro ao enviar evento:", eventResult);
+        eventError = eventResult;
+      } else {
+        console.log("Evento enviado:", eventResult);
+      }
+    } catch (error) {
+      console.error("Erro ao processar resposta do evento:", error);
+      eventError = error;
     }
 
-    if (!contactResponse.ok && !eventResponse.ok) {
-      console.error("Erro RD - Contato:", contactResult);
-      console.error("Erro RD - Evento:", eventResult);
+    // Se ambos falharam, retornar erro
+    if (contactError && eventError) {
       return NextResponse.json(
         { 
           error: "Erro ao enviar ao RD", 
-          contact_details: contactResult,
-          event_details: eventResult 
+          contact_details: contactError,
+          event_details: eventError 
         },
         { status: 500 }
       );
     }
 
+    // Se pelo menos um funcionou, retornar sucesso
     return NextResponse.json({ 
       success: true, 
       contact: contactResult,
-      event: eventResult 
+      event: eventResult,
+      warnings: {
+        contact_error: contactError || null,
+        event_error: eventError || null,
+      }
     });
   } catch (error) {
     console.error("Erro geral:", error);
