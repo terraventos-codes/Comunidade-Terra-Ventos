@@ -16,23 +16,44 @@ export async function POST(req: Request) {
     const trafficSource = body.traffic_source || "Comunidade Terra Ventos";
 
     // 1. Primeiro, criar/atualizar o contato com a origem usando a API de contatos
+    // URL correta da API Platform do RD Station
     const CONTACTS_API_URL = "https://api.rd.services/platform/contacts";
     
-    const contactPayload = {
+    // Payload formatado conforme documentação do RD Station
+    const contactPayload: any = {
       name: body.name,
       email: body.email,
-      personal_phone: body.mobile_phone,
-      // Definir a origem do lead (campo de sistema)
+      // Formato correto para telefone na API Platform
+      personal_phones: body.mobile_phone ? [
+        {
+          phone: body.mobile_phone,
+          type: "MOBILE"
+        }
+      ] : [],
+      // Campos de origem
       traffic_source: trafficSource,
       source: trafficSource,
-      // Campos customizados
-      custom_fields: {
-        // Campo personalizado "Origem do Lead" (seleção múltipla)
-        origem_do_lead: trafficSource, // Valor deve corresponder a uma das opções configuradas
-        investment_range: body.investment_range,
-        main_interest: body.main_interest,
-      },
     };
+
+    // Adicionar campos customizados apenas se existirem
+    if (body.investment_range || body.main_interest || trafficSource) {
+      contactPayload.custom_fields = {};
+      
+      if (trafficSource) {
+        contactPayload.custom_fields.origem_do_lead = trafficSource;
+      }
+      if (body.investment_range) {
+        contactPayload.custom_fields.investment_range = body.investment_range;
+      }
+      if (body.main_interest) {
+        contactPayload.custom_fields.main_interest = body.main_interest;
+      }
+    }
+
+    console.log("Enviando contato para RD Station:", {
+      url: CONTACTS_API_URL,
+      payload: JSON.stringify(contactPayload, null, 2)
+    });
 
     // Criar ou atualizar contato
     const contactResponse = await fetch(CONTACTS_API_URL, {
@@ -57,13 +78,17 @@ export async function POST(req: Request) {
       console.error("Erro RD - Contato:", {
         status: contactResponse.status,
         statusText: contactResponse.statusText,
+        url: CONTACTS_API_URL,
+        payload: contactPayload,
         result: contactResult,
+        responseHeaders: Object.fromEntries(contactResponse.headers.entries()),
       });
       return NextResponse.json(
         { 
           error: "Erro ao criar/atualizar contato no RD Station", 
           details: contactResult,
-          status: contactResponse.status
+          status: contactResponse.status,
+          url: CONTACTS_API_URL
         },
         { status: 500 }
       );
@@ -72,25 +97,45 @@ export async function POST(req: Request) {
     // 2. Depois, enviar o evento de conversão
     const EVENTS_API_URL = "https://api.rd.services/platform/events";
     
-    const eventPayload = {
+    // Payload do evento formatado conforme documentação do RD Station
+    const eventPayload: any = {
       event_type: "CONVERSION",
       event_family: "CDP",
       payload: {
         conversion_identifier: "Formulario Terra Ventos",
         name: body.name,
         email: body.email,
-        mobile_phone: body.mobile_phone,
-        // Incluir origem também no evento
+        personal_phones: body.mobile_phone ? [
+          {
+            phone: body.mobile_phone,
+            type: "MOBILE"
+          }
+        ] : [],
+        // Campos de origem
         traffic_source: trafficSource,
         source: trafficSource,
-        custom_fields: {
-          // Campo personalizado "Origem do Lead" (seleção múltipla)
-          origem_do_lead: trafficSource, // Valor deve corresponder a uma das opções configuradas
-          investment_range: body.investment_range,
-          main_interest: body.main_interest,
-        },
       },
     };
+
+    // Adicionar campos customizados ao evento apenas se existirem
+    if (body.investment_range || body.main_interest || trafficSource) {
+      eventPayload.payload.custom_fields = {};
+      
+      if (trafficSource) {
+        eventPayload.payload.custom_fields.origem_do_lead = trafficSource;
+      }
+      if (body.investment_range) {
+        eventPayload.payload.custom_fields.investment_range = body.investment_range;
+      }
+      if (body.main_interest) {
+        eventPayload.payload.custom_fields.main_interest = body.main_interest;
+      }
+    }
+
+    console.log("Enviando evento para RD Station:", {
+      url: EVENTS_API_URL,
+      payload: JSON.stringify(eventPayload, null, 2)
+    });
 
     const eventResponse = await fetch(EVENTS_API_URL, {
       method: "POST",
@@ -114,7 +159,10 @@ export async function POST(req: Request) {
       console.error("Erro RD - Evento:", {
         status: eventResponse.status,
         statusText: eventResponse.statusText,
+        url: EVENTS_API_URL,
+        payload: eventPayload,
         result: eventResult,
+        responseHeaders: Object.fromEntries(eventResponse.headers.entries()),
       });
       // Mesmo que o evento falhe, o contato foi criado, então retornamos sucesso parcial
       return NextResponse.json(
