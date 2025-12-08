@@ -4,8 +4,6 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const RD_API_URL = "https://api.rd.services/platform/events";
-
     const rdToken = process.env.RD_ACCESS_TOKEN;
     if (!rdToken) {
       console.error("RD_ACCESS_TOKEN não encontrada!");
@@ -15,7 +13,43 @@ export async function POST(req: Request) {
       );
     }
 
-    const payload = {
+    const trafficSource = body.traffic_source || "Comunidade Terra Ventos";
+
+    // 1. Primeiro, criar/atualizar o contato com a origem usando a API de contatos
+    const CONTACTS_API_URL = "https://api.rd.services/platform/contacts";
+    
+    const contactPayload = {
+      name: body.name,
+      email: body.email,
+      personal_phone: body.mobile_phone,
+      // Definir a origem do lead (campo de sistema)
+      traffic_source: trafficSource,
+      source: trafficSource,
+      // Campos customizados
+      custom_fields: {
+        // Campo personalizado "Origem do Lead" (seleção múltipla)
+        origem_do_lead: trafficSource, // Valor deve corresponder a uma das opções configuradas
+        investment_range: body.investment_range,
+        main_interest: body.main_interest,
+      },
+    };
+
+    // Criar ou atualizar contato
+    const contactResponse = await fetch(CONTACTS_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${rdToken}`,
+      },
+      body: JSON.stringify(contactPayload),
+    });
+
+    const contactResult = await contactResponse.json();
+
+    // 2. Depois, enviar o evento de conversão
+    const EVENTS_API_URL = "https://api.rd.services/platform/events";
+    
+    const eventPayload = {
       event_type: "CONVERSION",
       event_family: "CDP",
       payload: {
@@ -23,38 +57,47 @@ export async function POST(req: Request) {
         name: body.name,
         email: body.email,
         mobile_phone: body.mobile_phone,
-        // Origem do lead - necessário para não aparecer como "Desconhecido"
-        traffic_source: body.traffic_source || "Comunidade Terra Ventos",
-        source: body.traffic_source || "Comunidade Terra Ventos",
-
-        // 🔥 CAMPOS CUSTOMIZADOS → precisam estar aqui!
+        // Incluir origem também no evento
+        traffic_source: trafficSource,
+        source: trafficSource,
         custom_fields: {
+          // Campo personalizado "Origem do Lead" (seleção múltipla)
+          origem_do_lead: trafficSource, // Valor deve corresponder a uma das opções configuradas
           investment_range: body.investment_range,
           main_interest: body.main_interest,
         },
       },
     };
 
-    const response = await fetch(RD_API_URL, {
+    const eventResponse = await fetch(EVENTS_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${rdToken}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(eventPayload),
     });
 
-    const result = await response.json();
+    const eventResult = await eventResponse.json();
 
-    if (!response.ok) {
-      console.error("Erro RD:", result);
+    if (!contactResponse.ok && !eventResponse.ok) {
+      console.error("Erro RD - Contato:", contactResult);
+      console.error("Erro RD - Evento:", eventResult);
       return NextResponse.json(
-        { error: "Erro ao enviar ao RD", details: result },
+        { 
+          error: "Erro ao enviar ao RD", 
+          contact_details: contactResult,
+          event_details: eventResult 
+        },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ success: true, rd_return: result });
+    return NextResponse.json({ 
+      success: true, 
+      contact: contactResult,
+      event: eventResult 
+    });
   } catch (error) {
     console.error("Erro geral:", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
