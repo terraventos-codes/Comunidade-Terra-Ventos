@@ -4,192 +4,56 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const rdToken = process.env.RD_ACCESS_TOKEN;
-    if (!rdToken) {
-      console.error("RD_ACCESS_TOKEN não encontrada!");
+    const RD_TOKEN = process.env.RD_PUBLIC_TOKEN;
+    if (!RD_TOKEN) {
       return NextResponse.json(
-        { error: "RD token not configured" },
+        { error: "RD_PUBLIC_TOKEN não configurado" },
         { status: 500 }
       );
     }
 
-    const trafficSource = body.traffic_source || "Comunidade Terra Ventos";
-
-    // 1. Primeiro, criar/atualizar o contato com a origem usando a API de contatos
-    // URL correta da API Platform do RD Station
-    const CONTACTS_API_URL = "https://api.rd.services/platform/contacts";
-    
-    // Payload formatado conforme documentação do RD Station
-    const contactPayload: any = {
-      name: body.name,
+    // Campos oficiais aceitos pela API 1.3
+    const payload = {
+      token: RD_TOKEN,
+      identificador: "Formulario_Terra_Ventos",
       email: body.email,
-      // Formato correto para telefone na API Platform
-      personal_phones: body.mobile_phone ? [
-        {
-          phone: body.mobile_phone,
-          type: "MOBILE"
-        }
-      ] : [],
-      // Campos de origem
-      traffic_source: trafficSource,
-      source: trafficSource,
+      nome: body.name,
+      telefone: body.mobile_phone,
+      pais_estado: body.paisEstado,
+      faixa_investimento: body.investment_range,
+      interesse_principal: body.main_interest,
+      origem: "Comunidade Terra Ventos",
     };
 
-    // Adicionar campos customizados apenas se existirem
-    if (body.investment_range || body.main_interest || trafficSource) {
-      contactPayload.custom_fields = {};
-      
-      if (trafficSource) {
-        contactPayload.custom_fields.origem_do_lead = trafficSource;
+    const rdRes = await fetch(
+      "https://www.rdstation.com.br/api/1.3/conversions",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       }
-      if (body.investment_range) {
-        contactPayload.custom_fields.investment_range = body.investment_range;
-      }
-      if (body.main_interest) {
-        contactPayload.custom_fields.main_interest = body.main_interest;
-      }
-    }
+    );
 
-    console.log("Enviando contato para RD Station:", {
-      url: CONTACTS_API_URL,
-      payload: JSON.stringify(contactPayload, null, 2)
-    });
-
-    // Criar ou atualizar contato
-    const contactResponse = await fetch(CONTACTS_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${rdToken}`,
-      },
-      body: JSON.stringify(contactPayload),
-    });
-
-    let contactResult;
+    const rdText = await rdRes.text();
+    let rdJson = null;
     try {
-      const contactText = await contactResponse.text();
-      contactResult = contactText ? JSON.parse(contactText) : {};
-    } catch (parseError) {
-      console.error("Erro ao parsear resposta do contato:", parseError);
-      contactResult = { error: "Erro ao processar resposta" };
-    }
+      rdJson = JSON.parse(rdText);
+    } catch {}
 
-    if (!contactResponse.ok) {
-      console.error("Erro RD - Contato:", {
-        status: contactResponse.status,
-        statusText: contactResponse.statusText,
-        url: CONTACTS_API_URL,
-        payload: contactPayload,
-        result: contactResult,
-        responseHeaders: Object.fromEntries(contactResponse.headers.entries()),
-      });
+    if (!rdRes.ok) {
       return NextResponse.json(
-        { 
-          error: "Erro ao criar/atualizar contato no RD Station", 
-          details: contactResult,
-          status: contactResponse.status,
-          url: CONTACTS_API_URL
-        },
+        { error: true, status: rdRes.status, body: rdText },
         { status: 500 }
       );
     }
 
-    // 2. Depois, enviar o evento de conversão
-    const EVENTS_API_URL = "https://api.rd.services/platform/events";
-    
-    // Payload do evento formatado conforme documentação do RD Station
-    const eventPayload: any = {
-      event_type: "CONVERSION",
-      event_family: "CDP",
-      payload: {
-        conversion_identifier: "Formulario Terra Ventos",
-        name: body.name,
-        email: body.email,
-        personal_phones: body.mobile_phone ? [
-          {
-            phone: body.mobile_phone,
-            type: "MOBILE"
-          }
-        ] : [],
-        // Campos de origem
-        traffic_source: trafficSource,
-        source: trafficSource,
-      },
-    };
-
-    // Adicionar campos customizados ao evento apenas se existirem
-    if (body.investment_range || body.main_interest || trafficSource) {
-      eventPayload.payload.custom_fields = {};
-      
-      if (trafficSource) {
-        eventPayload.payload.custom_fields.origem_do_lead = trafficSource;
-      }
-      if (body.investment_range) {
-        eventPayload.payload.custom_fields.investment_range = body.investment_range;
-      }
-      if (body.main_interest) {
-        eventPayload.payload.custom_fields.main_interest = body.main_interest;
-      }
-    }
-
-    console.log("Enviando evento para RD Station:", {
-      url: EVENTS_API_URL,
-      payload: JSON.stringify(eventPayload, null, 2)
+    return NextResponse.json({
+      success: true,
+      rd_response: rdJson,
     });
-
-    const eventResponse = await fetch(EVENTS_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${rdToken}`,
-      },
-      body: JSON.stringify(eventPayload),
-    });
-
-    let eventResult;
-    try {
-      const eventText = await eventResponse.text();
-      eventResult = eventText ? JSON.parse(eventText) : {};
-    } catch (parseError) {
-      console.error("Erro ao parsear resposta do evento:", parseError);
-      eventResult = { error: "Erro ao processar resposta" };
-    }
-
-    if (!eventResponse.ok) {
-      console.error("Erro RD - Evento:", {
-        status: eventResponse.status,
-        statusText: eventResponse.statusText,
-        url: EVENTS_API_URL,
-        payload: eventPayload,
-        result: eventResult,
-        responseHeaders: Object.fromEntries(eventResponse.headers.entries()),
-      });
-      // Mesmo que o evento falhe, o contato foi criado, então retornamos sucesso parcial
-      return NextResponse.json(
-        { 
-          success: true,
-          warning: "Contato criado, mas evento falhou",
-          contact: contactResult,
-          event_error: eventResult,
-          event_status: eventResponse.status
-        },
-        { status: 200 }
-      );
-    }
-
-    return NextResponse.json({ 
-      success: true, 
-      contact: contactResult,
-      event: eventResult 
-    });
-  } catch (error: any) {
-    console.error("Erro geral na API RD Station:", error);
+  } catch (err: any) {
     return NextResponse.json(
-      { 
-        error: "Erro interno do servidor",
-        message: error?.message || "Erro desconhecido",
-        details: process.env.NODE_ENV === "development" ? error?.stack : undefined
-      },
+      { error: "Erro interno", message: err?.message },
       { status: 500 }
     );
   }

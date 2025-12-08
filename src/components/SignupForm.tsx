@@ -49,7 +49,6 @@ export default function SignupForm({
     setIsSubmitting(true);
     setSubmitStatus("idle");
 
-    // EmailJS Config
     const serviceId = "gmailMessage";
     const templateId = "template_4m13d9p";
     const publicKey = "qBifyS-ncgTggC0Co";
@@ -81,39 +80,28 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
     };
 
     try {
-      // 🔵 1 — Envia email via EmailJS
+      // ⛔ 1 — Envia Email via EmailJS
       await emailjs.send(serviceId, templateId, templateParams, publicKey);
 
-      // 🟢 2 — Envia lead via API Interna para o RD Station
-      try {
-        const rdResponse = await fetch("/api/rdstation", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            mobile_phone: formData.mobile_phone,
-            traffic_source: "Comunidade Terra Ventos",
-            investment_range: getInvestmentRange(formData.faixaInvestimento),
-            main_interest: getMainInterest(formData.interessePrincipal),
-          }),
+      // 🚀 2 — Envia Lead para o RD Station Marketing
+      if (typeof window !== "undefined" && (window as any).RdIntegration) {
+        (window as any).RdIntegration.post({
+          name: formData.name,
+          email: formData.email,
+          mobile_phone: formData.mobile_phone,
+          country: formData.paisEstado,
+          investment_range: getInvestmentRange(formData.faixaInvestimento),
+          main_interest: getMainInterest(formData.interessePrincipal),
+          traffic_source: "Comunidade Terra Ventos",
+          cf_origem_do_lead: "Comunidade Terra Ventos",
         });
-
-        // Verifica se a resposta está ok (mas não bloqueia o sucesso se falhar)
-        if (!rdResponse.ok) {
-          const errorData = await rdResponse.json().catch(() => ({}));
-          console.error("Erro ao enviar para RD Station:", errorData);
-          // Continua mesmo com erro no RD Station, pois o email foi enviado com sucesso
-        }
-      } catch (rdError) {
-        // Erro no RD Station não deve bloquear o sucesso do formulário
-        console.error("Erro ao enviar para RD Station:", rdError);
       }
 
-      // Sucesso na UI
+      // UI de sucesso
       setSubmitStatus("success");
 
       setTimeout(() => {
+        setSubmitStatus("idle");
         setFormData({
           name: "",
           email: "",
@@ -123,11 +111,10 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
           interessePrincipal: "",
           aceitoComunicacoes: false,
         });
-        setSubmitStatus("idle");
         onSubmit?.();
       }, 3000);
     } catch (error) {
-      console.error("Erro ao enviar:", error);
+      console.error("Erro ao enviar formulário:", error);
       setSubmitStatus("error");
     } finally {
       setIsSubmitting(false);
@@ -190,6 +177,12 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <input
+            type="hidden"
+            name="traffic_source"
+            value="Comunidade Terra Ventos"
+          />
+
           {/* Nome + Email */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -316,7 +309,7 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
             </div>
           </div>
 
-          {/* Aceite */}
+          {/* Checkbox */}
           <div className="flex items-start">
             <input
               type="checkbox"
