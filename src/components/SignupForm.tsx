@@ -85,18 +85,30 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
       await emailjs.send(serviceId, templateId, templateParams, publicKey);
 
       // 🟢 2 — Envia lead via API Interna para o RD Station
-      await fetch("/api/rdstation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          mobile_phone: formData.mobile_phone,
-          traffic_source: "Comunidade Terra Ventos",
-          investment_range: getInvestmentRange(formData.faixaInvestimento),
-          main_interest: getMainInterest(formData.interessePrincipal),
-        }),
-      });
+      try {
+        const rdResponse = await fetch("/api/rdstation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            mobile_phone: formData.mobile_phone,
+            traffic_source: "Comunidade Terra Ventos",
+            investment_range: getInvestmentRange(formData.faixaInvestimento),
+            main_interest: getMainInterest(formData.interessePrincipal),
+          }),
+        });
+
+        // Verifica se a resposta está ok (mas não bloqueia o sucesso se falhar)
+        if (!rdResponse.ok) {
+          const errorData = await rdResponse.json().catch(() => ({}));
+          console.error("Erro ao enviar para RD Station:", errorData);
+          // Continua mesmo com erro no RD Station, pois o email foi enviado com sucesso
+        }
+      } catch (rdError) {
+        // Erro no RD Station não deve bloquear o sucesso do formulário
+        console.error("Erro ao enviar para RD Station:", rdError);
+      }
 
       // Sucesso na UI
       setSubmitStatus("success");

@@ -18,48 +18,55 @@ export async function POST(req: Request) {
     // 1. Primeiro, criar/atualizar o contato com a origem usando a API de contatos
     const CONTACTS_API_URL = "https://api.rd.services/platform/contacts";
     
-    const contactPayload: any = {
+    const contactPayload = {
       name: body.name,
       email: body.email,
       personal_phone: body.mobile_phone,
+      // Definir a origem do lead (campo de sistema)
+      traffic_source: trafficSource,
+      source: trafficSource,
       // Campos customizados
       custom_fields: {
+        // Campo personalizado "Origem do Lead" (seleção múltipla)
+        origem_do_lead: trafficSource, // Valor deve corresponder a uma das opções configuradas
         investment_range: body.investment_range,
         main_interest: body.main_interest,
       },
     };
 
-    // Adicionar origem do lead no campo personalizado (tentar diferentes nomes)
-    if (trafficSource) {
-      contactPayload.custom_fields.origem_do_lead = trafficSource;
+    // Criar ou atualizar contato
+    const contactResponse = await fetch(CONTACTS_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${rdToken}`,
+      },
+      body: JSON.stringify(contactPayload),
+    });
+
+    let contactResult;
+    try {
+      const contactText = await contactResponse.text();
+      contactResult = contactText ? JSON.parse(contactText) : {};
+    } catch (parseError) {
+      console.error("Erro ao parsear resposta do contato:", parseError);
+      contactResult = { error: "Erro ao processar resposta" };
     }
 
-    let contactResult: any = null;
-    let contactError: any = null;
-
-    try {
-      // Criar ou atualizar contato
-      const contactResponse = await fetch(CONTACTS_API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${rdToken}`,
-        },
-        body: JSON.stringify(contactPayload),
+    if (!contactResponse.ok) {
+      console.error("Erro RD - Contato:", {
+        status: contactResponse.status,
+        statusText: contactResponse.statusText,
+        result: contactResult,
       });
-
-      contactResult = await contactResponse.json();
-      
-      // Log para debug
-      if (!contactResponse.ok) {
-        console.error("Erro ao criar contato:", contactResult);
-        contactError = contactResult;
-      } else {
-        console.log("Contato criado/atualizado:", contactResult);
-      }
-    } catch (error) {
-      console.error("Erro ao chamar API de contatos:", error);
-      contactError = error;
+      return NextResponse.json(
+        { 
+          error: "Erro ao criar/atualizar contato no RD Station", 
+          details: contactResult,
+          status: contactResponse.status
+        },
+        { status: 500 }
+      );
     }
 
     // 2. Depois, enviar o evento de conversão
@@ -73,12 +80,12 @@ export async function POST(req: Request) {
         name: body.name,
         email: body.email,
         mobile_phone: body.mobile_phone,
-        // Incluir origem no evento
+        // Incluir origem também no evento
         traffic_source: trafficSource,
-        traffic_medium: "website",
+        source: trafficSource,
         custom_fields: {
           // Campo personalizado "Origem do Lead" (seleção múltipla)
-          origem_do_lead: trafficSource,
+          origem_do_lead: trafficSource, // Valor deve corresponder a uma das opções configuradas
           investment_range: body.investment_range,
           main_interest: body.main_interest,
         },
@@ -94,48 +101,48 @@ export async function POST(req: Request) {
       body: JSON.stringify(eventPayload),
     });
 
-    let eventResult: any = null;
-    let eventError: any = null;
-
+    let eventResult;
     try {
-      eventResult = await eventResponse.json();
-      
-      // Log para debug
-      if (!eventResponse.ok) {
-        console.error("Erro ao enviar evento:", eventResult);
-        eventError = eventResult;
-      } else {
-        console.log("Evento enviado:", eventResult);
-      }
-    } catch (error) {
-      console.error("Erro ao processar resposta do evento:", error);
-      eventError = error;
+      const eventText = await eventResponse.text();
+      eventResult = eventText ? JSON.parse(eventText) : {};
+    } catch (parseError) {
+      console.error("Erro ao parsear resposta do evento:", parseError);
+      eventResult = { error: "Erro ao processar resposta" };
     }
 
-    // Se ambos falharam, retornar erro
-    if (contactError && eventError) {
+    if (!eventResponse.ok) {
+      console.error("Erro RD - Evento:", {
+        status: eventResponse.status,
+        statusText: eventResponse.statusText,
+        result: eventResult,
+      });
+      // Mesmo que o evento falhe, o contato foi criado, então retornamos sucesso parcial
       return NextResponse.json(
         { 
-          error: "Erro ao enviar ao RD", 
-          contact_details: contactError,
-          event_details: eventError 
+          success: true,
+          warning: "Contato criado, mas evento falhou",
+          contact: contactResult,
+          event_error: eventResult,
+          event_status: eventResponse.status
         },
-        { status: 500 }
+        { status: 200 }
       );
     }
 
-    // Se pelo menos um funcionou, retornar sucesso
     return NextResponse.json({ 
       success: true, 
       contact: contactResult,
-      event: eventResult,
-      warnings: {
-        contact_error: contactError || null,
-        event_error: eventError || null,
-      }
+      event: eventResult 
     });
-  } catch (error) {
-    console.error("Erro geral:", error);
-    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Erro geral na API RD Station:", error);
+    return NextResponse.json(
+      { 
+        error: "Erro interno do servidor",
+        message: error?.message || "Erro desconhecido",
+        details: process.env.NODE_ENV === "development" ? error?.stack : undefined
+      },
+      { status: 500 }
+    );
   }
 }
