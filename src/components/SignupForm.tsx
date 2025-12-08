@@ -49,6 +49,7 @@ export default function SignupForm({
     setIsSubmitting(true);
     setSubmitStatus("idle");
 
+    // EmailJS Config
     const serviceId = "gmailMessage";
     const templateId = "template_4m13d9p";
     const publicKey = "qBifyS-ncgTggC0Co";
@@ -80,37 +81,27 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
     };
 
     try {
-      // ⛔ 1 — Envia Email via EmailJS
+      // 🔵 1 — Envia email via EmailJS
       await emailjs.send(serviceId, templateId, templateParams, publicKey);
 
-      // 🚀 2 — Envia Lead para o RD Station Marketing
-      if (typeof window !== "undefined" && (window as any).RdIntegration) {
-        (window as any).RdIntegration.post({
+      // 🟢 2 — Envia lead via API Interna para o RD Station
+      await fetch("/api/rdstation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           name: formData.name,
           email: formData.email,
           mobile_phone: formData.mobile_phone,
-          country: formData.paisEstado,
+          traffic_source: "Comunidade Terra Ventos",
           investment_range: getInvestmentRange(formData.faixaInvestimento),
           main_interest: getMainInterest(formData.interessePrincipal),
+        }),
+      });
 
-          // **Ajuste:** Substitua traffic_source pelo c_utmz
-          // c_utmz: "Origem|Mídia|Campanha|Conteúdo|Termo"
-          // Use o formato abaixo para forçar a Origem
-          c_utmz:
-            "utm_source=Comunidade&utm_medium=Proprio&utm_campaign=TerraVentos",
-
-          // Opcional: Se quiser que o nome do formulário apareça nos detalhes da conversão
-          identificador: "Formulário-Comunidade-TV",
-          // Mantenha seu campo customizado para backup, se quiser
-          cf_origem_do_lead: "Comunidade Terra Ventos",
-        });
-      }
-
-      // UI de sucesso
+      // Sucesso na UI
       setSubmitStatus("success");
 
       setTimeout(() => {
-        setSubmitStatus("idle");
         setFormData({
           name: "",
           email: "",
@@ -120,10 +111,11 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
           interessePrincipal: "",
           aceitoComunicacoes: false,
         });
+        setSubmitStatus("idle");
         onSubmit?.();
       }, 3000);
     } catch (error) {
-      console.error("Erro ao enviar formulário:", error);
+      console.error("Erro ao enviar:", error);
       setSubmitStatus("error");
     } finally {
       setIsSubmitting(false);
@@ -186,12 +178,6 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <input
-            type="hidden"
-            name="origem_do_lead"
-            value="Comunidade Terra Ventos"
-          />
-
           {/* Nome + Email */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -318,7 +304,7 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
             </div>
           </div>
 
-          {/* Checkbox */}
+          {/* Aceite */}
           <div className="flex items-start">
             <input
               type="checkbox"
