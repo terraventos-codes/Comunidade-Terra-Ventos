@@ -246,10 +246,10 @@ export default function Hero({ onContactClick }: HeroProps) {
 
         {/* Container principal do conteúdo */}
         <div id="hero-form" className="relative z-30 w-full flex items-center justify-center min-h-screen">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-28 lg:py-0 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-20 pb-8 sm:py-20 lg:py-0 flex flex-col lg:flex-row items-center justify-center lg:justify-between gap-6 lg:gap-12 mt-10 lg:mt-0">
             {/* Esquerda: Texto */}
             <motion.div
-              className="text-white space-y-6 lg:w-1/2 text-center lg:text-left w-full"
+              className="text-white space-y-4 lg:space-y-6 lg:w-1/2 text-center lg:text-left w-full"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -267,19 +267,19 @@ export default function Hero({ onContactClick }: HeroProps) {
                 {/* Linha 1: "Terra Ventos Comunidade," — mais compacta para caber */}
                 <div
                   className="font-breathing text-white block leading-none"
-                  style={{ fontSize: "clamp(2rem, 6vw, 4.5rem)" }}
+                  style={{ fontSize: "clamp(1.75rem, 6vw, 4.5rem)" }}
                 >
                   {t("signup.title")}
                 </div>
 
                 {/* Linha 2: "Vento a Favor." — Inter regular, sem quebra */}
                 <div
-                  className="text-white block leading-none mt-2 sm:mt-3 font-normal tracking-tight"
+                  className="text-white block leading-none mt-1 sm:mt-3 font-normal tracking-tight"
                   style={{
-                    fontSize: "clamp(2rem, 7vw, 6rem)",
+                    fontSize: "clamp(1.75rem, 8vw, 6rem)",
                     fontFamily: "'Inter', system-ui, sans-serif",
                     fontWeight: 400,
-                    whiteSpace: "nowrap",
+                    whiteSpace: "normal",
                   }}
                 >
                   {t("signup.title2")}
@@ -297,51 +297,51 @@ export default function Hero({ onContactClick }: HeroProps) {
                   ease: [0.25, 0.46, 0.45, 0.94],
                 }}
               >
-                <p className="text-base sm:text-lg md:text-xl font-semibold mb-1">
+                <p className="text-sm sm:text-lg md:text-xl font-semibold mb-1">
                   {t("signup.subtitle.line1")}
                 </p>
-                <p className="text-base sm:text-lg md:text-xl font-semibold mb-3">
+                <p className="text-sm sm:text-lg md:text-xl font-semibold mb-2 sm:mb-3">
                   {t("signup.subtitle.line2")}
                 </p>
-                <p className="text-sm sm:text-base md:text-lg font-medium opacity-80">
+                <p className="text-xs sm:text-base md:text-lg font-medium opacity-80">
                   {t("signup.subtitle.line3")}
                 </p>
               </motion.div>
 
               {/* Trust bar: mini-stats embutidos abaixo do texto */}
               <motion.div
-                className="flex flex-row items-center justify-center lg:justify-start gap-6 pt-2"
+                className="flex flex-row items-center justify-center lg:justify-start gap-4 sm:gap-6 pt-1 sm:pt-2"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.4, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
               >
                 <div className="text-center lg:text-left">
-                  <div className="text-2xl font-bold text-accent-500" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>500+</div>
-                  <div className="text-xs text-white/70 font-medium">Investidores</div>
+                  <div className="text-xl sm:text-2xl font-bold text-accent-500" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>500+</div>
+                  <div className="text-[10px] sm:text-xs text-white/70 font-medium">Investidores</div>
                 </div>
-                <div className="w-px h-8 bg-white/25"></div>
+                <div className="w-px h-6 sm:h-8 bg-white/25"></div>
                 <div className="text-center lg:text-left">
-                  <div className="text-2xl font-bold text-accent-500" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>{t("stats.value")}</div>
-                  <div className="text-xs text-white/70 font-medium">{t("stats.volume")}</div>
+                  <div className="text-xl sm:text-2xl font-bold text-accent-500" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>{t("stats.value")}</div>
+                  <div className="text-[10px] sm:text-xs text-white/70 font-medium">{t("stats.volume")}</div>
                 </div>
-                <div className="w-px h-8 bg-white/25"></div>
+                <div className="w-px h-6 sm:h-8 bg-white/25"></div>
                 <div className="text-center lg:text-left">
-                  <div className="text-2xl font-bold text-accent-500" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>100%</div>
-                  <div className="text-xs text-white/70 font-medium">Curadoria jurídica</div>
+                  <div className="text-xl sm:text-2xl font-bold text-accent-500" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>100%</div>
+                  <div className="text-[10px] sm:text-xs text-white/70 font-medium leading-tight max-w-[60px] sm:max-w-none mx-auto">Curadoria jurídica</div>
                 </div>
               </motion.div>
 
               {/* Tags de nicho */}
               <motion.div
-                className="flex flex-wrap items-center gap-2 justify-center lg:justify-start"
+                className="flex flex-wrap items-center gap-1 sm:gap-2 justify-center lg:justify-start"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.7, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
               >
-                {["imóveis", "kite", "wingfoil", "wellness", "lifestyle & sports"].map((tag) => (
+                {["imóveis", "kite", "wingfoil", "wellness", "lifestyle"].map((tag) => (
                   <span
                     key={tag}
-                    className="text-xs px-3 py-1 rounded-full border border-white/25 bg-white/10 text-white/70 backdrop-blur-sm font-medium tracking-widest uppercase"
+                    className="text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-white/25 bg-white/10 text-white/70 backdrop-blur-sm font-medium tracking-widest uppercase"
                     style={{ textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}
                   >
                     {tag}
@@ -352,7 +352,7 @@ export default function Hero({ onContactClick }: HeroProps) {
 
             {/* Direita: Formulário */}
             <motion.div
-              className="w-full lg:w-1/2 max-w-md lg:max-w-lg mx-auto lg:mx-0 flex-shrink-0"
+              className="w-full lg:w-1/2 max-w-md lg:max-w-lg mx-auto lg:mx-0 flex-shrink-0 pb-8 lg:pb-0"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{

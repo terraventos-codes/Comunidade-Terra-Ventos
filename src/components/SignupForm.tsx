@@ -159,7 +159,7 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
       )}
 
       <motion.div
-        className="bg-white rounded-2xl shadow-2xl p-6 md:p-8"
+        className="bg-white rounded-2xl shadow-2xl p-5 sm:p-6 md:p-8"
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 1.2, delay: 0.4 }}
@@ -176,7 +176,7 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 md:space-y-6">
           <input
             type="hidden"
             name="traffic_source"
