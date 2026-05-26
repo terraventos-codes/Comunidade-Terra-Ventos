@@ -83,19 +83,7 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
       // ⛔ 1 — Envia Email via EmailJS
       await emailjs.send(serviceId, templateId, templateParams, publicKey);
 
-      // 🚀 2 — Envia Lead para o RD Station Marketing
-      if (typeof window !== "undefined" && (window as any).RdIntegration) {
-        (window as any).RdIntegration.post({
-          name: formData.name,
-          email: formData.email,
-          mobile_phone: formData.mobile_phone,
-          country: formData.paisEstado,
-          investment_range: getInvestmentRange(formData.faixaInvestimento),
-          main_interest: getMainInterest(formData.interessePrincipal),
-          traffic_source: "Comunidade Terra Ventos",
-          cf_origem_do_lead: "Comunidade Terra Ventos",
-        });
-      }
+
 
       // UI de sucesso
       setSubmitStatus("success");
@@ -134,11 +122,11 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
 
   const getMainInterest = (code: string): string => {
     const interests: { [key: string]: string } = {
-      investment: "Investimento",
-      lifestyle: "Lifestyle",
-      kitesurf: "Kitesurf",
-      tourism: "Turismo",
-      business: "Negócios",
+      houses: "Casas",
+      lands: "Terrenos",
+      condos: "Condominios",
+      hotels: "Hotéis e Pousadas",
+      other: "Outro:",
     };
     return interests[code] || code;
   };
@@ -284,11 +272,11 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
                 className="w-full px-3 py-2.5 border border-gray-400 rounded-lg text-gray-900 bg-white focus:border-accent-500 focus:ring-1 focus:ring-accent-500 outline-none transition-colors"
               >
                 <option value="">{t("signup.select")}</option>
-                <option value="investment">{t("signup.option.investment")}</option>
-                <option value="lifestyle">{t("signup.option.lifestyle")}</option>
-                <option value="kitesurf">{t("signup.option.kitesurf")}</option>
-                <option value="tourism">{t("signup.option.tourism")}</option>
-                <option value="business">{t("signup.option.business")}</option>
+                <option value="houses">{t("signup.option.houses")}</option>
+                <option value="lands">{t("signup.option.lands")}</option>
+                <option value="condos">{t("signup.option.condos")}</option>
+                <option value="hotels">{t("signup.option.hotels")}</option>
+                <option value="other">{t("signup.option.other")}</option>
               </select>
             </div>
           </div>

@@ -12,7 +12,7 @@ import Hero from "@/components/Hero";
 // import Footer from "@/components/Footer";
 import SignupModal from "@/components/SignupModal";
 import DynamicMeta from "@/components/DynamicMeta";
-// import WhatsAppButton from "@/components/WhatsAppButton";
+
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -38,7 +38,7 @@ export default function Home() {
       {/* <Footer /> */}
 
       <SignupModal isOpen={isModalOpen} onClose={closeModal} />
-      {/* <WhatsAppButton /> */}
+
     </motion.main>
   );
 }
