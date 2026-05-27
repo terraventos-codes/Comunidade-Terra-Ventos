@@ -11,7 +11,7 @@ interface LanguageContextType {
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(
-  undefined
+  undefined,
 );
 
 // Translations
@@ -96,8 +96,7 @@ const translations = {
       "Uma comunidade para quem busca investir na costa com segurança, bem-estar e um novo estilo de vida.",
     "signup.subtitle.line1":
       "Os ventos do nordeste, casas e terrenos costeiros:",
-    "signup.subtitle.line2":
-      "você construindo o futuro do litoral brasileiro.",
+    "signup.subtitle.line2": "você construindo o futuro do litoral brasileiro.",
     "signup.subtitle.line3":
       "Uma comunidade para quem busca investir na costa com segurança, bem-estar e um novo estilo de vida.",
     "signup.name": "Nome completo",
@@ -114,6 +113,7 @@ const translations = {
     "signup.success": "Cadastro realizado com sucesso!",
     "signup.error": "Erro ao enviar cadastro. Tente novamente.",
     "signup.country": "País/Estado",
+    "signup.calendar": "Data/Hora do Calendário",
     "signup.accept":
       "Aceito receber comunicações da Terra Ventos sobre oportunidades",
     "signup.privacy": "Seus dados estão protegidos, conforme nossa",
@@ -261,10 +261,8 @@ const translations = {
     "signup.title2": "Wind in Your Favor.",
     "signup.subtitle":
       "A community for those who seek to invest on the coast with safety, well-being and a new lifestyle.",
-    "signup.subtitle.line1":
-      "The northeastern winds, coastal homes and land:",
-    "signup.subtitle.line2":
-      "you building the future of the Brazilian coast.",
+    "signup.subtitle.line1": "The northeastern winds, coastal homes and land:",
+    "signup.subtitle.line2": "you building the future of the Brazilian coast.",
     "signup.subtitle.line3":
       "A community for those who seek to invest on the coast with safety, well-being and a new lifestyle.",
     "signup.name": "Full name",
@@ -281,6 +279,7 @@ const translations = {
     "signup.success": "Registration successful!",
     "signup.error": "Error submitting registration. Please try again.",
     "signup.country": "Country/State",
+    "signup.calendar": "Calendar date/time",
     "signup.accept":
       "I accept receiving communications from Terra Ventos about opportunities",
     "signup.privacy": "Your data is protected, according to our",
@@ -429,8 +428,7 @@ const translations = {
       "Una comunidad para quienes buscan invertir en la costa con seguridad, bienestar y un nuevo estilo de vida.",
     "signup.subtitle.line1":
       "Los vientos del noreste, casas y terrenos costeros:",
-    "signup.subtitle.line2":
-      "tú construyendo el futuro del litoral brasileño.",
+    "signup.subtitle.line2": "tú construyendo el futuro del litoral brasileño.",
     "signup.subtitle.line3":
       "Una comunidad para quienes buscan invertir en la costa con seguridad, bienestar y un nuevo estilo de vida.",
     "signup.name": "Nombre completo",
@@ -447,6 +445,7 @@ const translations = {
     "signup.success": "¡Registro exitoso!",
     "signup.error": "Error al enviar el registro. Inténtalo de nuevo.",
     "signup.country": "País/Estado",
+    "signup.calendar": "Fecha/Hora del calendario",
     "signup.accept":
       "Acepto recibir comunicaciones de Terra Ventos sobre oportunidades",
     "signup.privacy": "Tus datos están protegidos, según nuestra",
@@ -628,7 +627,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     } catch (error) {
       console.log(
         "Could not detect location, using fallback language detection:",
-        error
+        error,
       );
 
       // Fallback to browser language detection
@@ -640,7 +639,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       } catch (browserError) {
         console.log(
           "Browser language detection failed, using Portuguese default:",
-          browserError
+          browserError,
         );
         return "pt"; // Default to Portuguese as requested
       }
@@ -659,8 +658,8 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
             savedLanguage === "pt"
               ? "pt-BR"
               : savedLanguage === "en"
-              ? "en-US"
-              : "es-ES";
+                ? "en-US"
+                : "es-ES";
           return;
         }
 

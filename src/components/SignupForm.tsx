@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import emailjs from "@emailjs/browser";
+// import emailjs from "@emailjs/browser";
 
 interface SignupFormProps {
   onSubmit?: () => void;
@@ -23,6 +23,7 @@ export default function SignupForm({
     email: "",
     mobile_phone: "",
     paisEstado: "",
+    calendar_date: "",
     faixaInvestimento: "",
     interessePrincipal: "",
     aceitoComunicacoes: false,
@@ -34,7 +35,7 @@ export default function SignupForm({
   >("idle");
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value, type } = e.target;
     setFormData((prev) => ({
@@ -49,41 +50,43 @@ export default function SignupForm({
     setIsSubmitting(true);
     setSubmitStatus("idle");
 
-    const serviceId = "gmailMessage";
-    const templateId = "template_4m13d9p";
-    const publicKey = "qBifyS-ncgTggC0Co";
-
-    const templateParams = {
-      to_email: "rimesleo@gmail.com",
-      from_name: formData.name,
-      from_email: formData.email,
-      phone: formData.mobile_phone,
-      country: formData.paisEstado || "Não informado",
+    const brevoPayload = {
+      name: formData.name,
+      email: formData.email,
+      mobile_phone: formData.mobile_phone,
+      paisEstado: formData.paisEstado || "Não informado",
       investment_range: getInvestmentRange(formData.faixaInvestimento),
       main_interest: getMainInterest(formData.interessePrincipal),
-      message: `
-Nova Inscrição - Terra Ventos
-
-Informações Pessoais:
-- Nome: ${formData.name}
-- Email: ${formData.email}
-- Telefone/WhatsApp: ${formData.mobile_phone}
-- País/Estado: ${formData.paisEstado || "Não informado"}
-
-Informações de Investimento:
-- Faixa de Investimento: ${getInvestmentRange(formData.faixaInvestimento)}
-- Interesse Principal: ${getMainInterest(formData.interessePrincipal)}
-
-Origem: Comunidade Terra Ventos
-Data/Hora: ${new Date().toLocaleString("pt-BR")}
-      `.trim(),
+      calendar_date: formData.calendar_date || "Não informado",
     };
 
     try {
       // ⛔ 1 — Envia Email via EmailJS
-      await emailjs.send(serviceId, templateId, templateParams, publicKey);
+      // const serviceId = "gmailMessage";
+      // const templateId = "template_4m13d9p";
+      // const publicKey = "qBifyS-ncgTggC0Co";
+      // const templateParams = {
+      //   to_email: "rimesleo@gmail.com",
+      //   from_name: formData.name,
+      //   from_email: formData.email,
+      //   phone: formData.mobile_phone,
+      //   country: formData.paisEstado || "Não informado",
+      //   investment_range: getInvestmentRange(formData.faixaInvestimento),
+      //   main_interest: getMainInterest(formData.interessePrincipal),
+      //   message: `\nNova Inscrição - Terra Ventos\n\nInformações Pessoais:\n- Nome: ${formData.name}\n- Email: ${formData.email}\n- Telefone/WhatsApp: ${formData.mobile_phone}\n- País/Estado: ${formData.paisEstado || "Não informado"}\n\nInformações de Investimento:\n- Faixa de Investimento: ${getInvestmentRange(formData.faixaInvestimento)}\n- Interesse Principal: ${getMainInterest(formData.interessePrincipal)}\n\nOrigem: Comunidade Terra Ventos\nData/Hora: ${new Date().toLocaleString("pt-BR")}\n      `.trim(),
+      // };
+      // await emailjs.send(serviceId, templateId, templateParams, publicKey);
 
+      const brevoRes = await fetch("/api/brevo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(brevoPayload),
+      });
 
+      if (!brevoRes.ok) {
+        const errorBody = await brevoRes.text();
+        throw new Error(`Brevo API falhou: ${brevoRes.status} - ${errorBody}`);
+      }
 
       // UI de sucesso
       setSubmitStatus("success");
@@ -95,6 +98,7 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
           email: "",
           mobile_phone: "",
           paisEstado: "",
+          calendar_date: "",
           faixaInvestimento: "",
           interessePrincipal: "",
           aceitoComunicacoes: false,
@@ -164,7 +168,10 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 md:space-y-6">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4 sm:space-y-5 md:space-y-6"
+        >
           <input
             type="hidden"
             name="traffic_source"
@@ -174,7 +181,10 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
           {/* Nome + Email */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-semibold text-gray-800 mb-1">
+              <label
+                htmlFor="name"
+                className="block text-sm font-semibold text-gray-800 mb-1"
+              >
                 {t("signup.name")} *
               </label>
               <input
@@ -189,7 +199,10 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-800 mb-1">
+              <label
+                htmlFor="email"
+                className="block text-sm font-semibold text-gray-800 mb-1"
+              >
                 {t("signup.email")} *
               </label>
               <input
@@ -207,7 +220,10 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
           {/* Telefone + País */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="mobile_phone" className="block text-sm font-semibold text-gray-800 mb-1">
+              <label
+                htmlFor="mobile_phone"
+                className="block text-sm font-semibold text-gray-800 mb-1"
+              >
                 {t("signup.phone")} *
               </label>
               <input
@@ -222,7 +238,10 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
             </div>
 
             <div>
-              <label htmlFor="paisEstado" className="block text-sm font-semibold text-gray-800 mb-1">
+              <label
+                htmlFor="paisEstado"
+                className="block text-sm font-semibold text-gray-800 mb-1"
+              >
                 {t("signup.country")}
               </label>
               <input
@@ -234,12 +253,32 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
                 className="w-full px-3 py-2.5 border border-gray-400 rounded-lg text-gray-900 bg-white focus:border-accent-500 focus:ring-1 focus:ring-accent-500 outline-none transition-colors"
               />
             </div>
+
+            <div>
+              <label
+                htmlFor="calendar_date"
+                className="block text-sm font-semibold text-gray-800 mb-1"
+              >
+                {t("signup.calendar")}
+              </label>
+              <input
+                type="datetime-local"
+                id="calendar_date"
+                name="calendar_date"
+                value={formData.calendar_date}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2.5 border border-gray-400 rounded-lg text-gray-900 bg-white focus:border-accent-500 focus:ring-1 focus:ring-accent-500 outline-none transition-colors"
+              />
+            </div>
           </div>
 
           {/* Faixa de investimento + Interesse */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="faixaInvestimento" className="block text-sm font-semibold text-gray-800 mb-1">
+              <label
+                htmlFor="faixaInvestimento"
+                className="block text-sm font-semibold text-gray-800 mb-1"
+              >
                 {t("signup.budget")} *
               </label>
               <select
@@ -260,7 +299,10 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
             </div>
 
             <div>
-              <label htmlFor="interessePrincipal" className="block text-sm font-semibold text-gray-800 mb-1">
+              <label
+                htmlFor="interessePrincipal"
+                className="block text-sm font-semibold text-gray-800 mb-1"
+              >
                 {t("signup.interest")} *
               </label>
               <select
@@ -291,7 +333,10 @@ Data/Hora: ${new Date().toLocaleString("pt-BR")}
               onChange={handleInputChange}
               className="mt-1 h-4 w-4 rounded border-gray-400 text-accent-500 focus:ring-accent-500 flex-shrink-0"
             />
-            <label htmlFor="aceitoComunicacoes" className="ml-3 text-sm text-gray-700 font-medium leading-snug">
+            <label
+              htmlFor="aceitoComunicacoes"
+              className="ml-3 text-sm text-gray-700 font-medium leading-snug"
+            >
               {t("signup.accept")}
             </label>
           </div>
