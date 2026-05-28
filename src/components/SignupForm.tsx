@@ -23,9 +23,9 @@ export default function SignupForm({
     email: "",
     mobile_phone: "",
     paisEstado: "",
-    calendar_date: "",
     faixaInvestimento: "",
     interessePrincipal: "",
+    regiaoInteresse: "",
     aceitoComunicacoes: false,
   });
 
@@ -50,6 +50,10 @@ export default function SignupForm({
     setIsSubmitting(true);
     setSubmitStatus("idle");
 
+    // Captura a data/hora atual automaticamente no momento do envio
+    const now = new Date();
+    const calendar_date = now.toISOString().slice(0, 16); // formato: "2026-05-28T14:50"
+
     const brevoPayload = {
       name: formData.name,
       email: formData.email,
@@ -57,7 +61,8 @@ export default function SignupForm({
       paisEstado: formData.paisEstado || "Não informado",
       investment_range: getInvestmentRange(formData.faixaInvestimento),
       main_interest: getMainInterest(formData.interessePrincipal),
-      calendar_date: formData.calendar_date || "Não informado",
+      region_interest: formData.regiaoInteresse || "Não informado",
+      calendar_date,
     };
 
     try {
@@ -98,9 +103,9 @@ export default function SignupForm({
           email: "",
           mobile_phone: "",
           paisEstado: "",
-          calendar_date: "",
           faixaInvestimento: "",
           interessePrincipal: "",
+          regiaoInteresse: "",
           aceitoComunicacoes: false,
         });
         onSubmit?.();
@@ -253,23 +258,6 @@ export default function SignupForm({
                 className="w-full px-3 py-2.5 border border-gray-400 rounded-lg text-gray-900 bg-white focus:border-accent-500 focus:ring-1 focus:ring-accent-500 outline-none transition-colors"
               />
             </div>
-
-            <div>
-              <label
-                htmlFor="calendar_date"
-                className="block text-sm font-semibold text-gray-800 mb-1"
-              >
-                {t("signup.calendar")}
-              </label>
-              <input
-                type="datetime-local"
-                id="calendar_date"
-                name="calendar_date"
-                value={formData.calendar_date}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2.5 border border-gray-400 rounded-lg text-gray-900 bg-white focus:border-accent-500 focus:ring-1 focus:ring-accent-500 outline-none transition-colors"
-              />
-            </div>
           </div>
 
           {/* Faixa de investimento + Interesse */}
@@ -321,6 +309,29 @@ export default function SignupForm({
                 <option value="other">{t("signup.option.other")}</option>
               </select>
             </div>
+          </div>
+
+          {/* Região de interesse */}
+          <div>
+            <label
+              htmlFor="regiaoInteresse"
+              className="block text-sm font-semibold text-gray-800 mb-1"
+            >
+              Região de interesse
+            </label>
+            <select
+              id="regiaoInteresse"
+              name="regiaoInteresse"
+              value={formData.regiaoInteresse}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2.5 border border-gray-400 rounded-lg text-gray-900 bg-white focus:border-accent-500 focus:ring-1 focus:ring-accent-500 outline-none transition-colors"
+            >
+              <option value="">Selecione uma região</option>
+              <option value="Tatajuba">Tatajuba</option>
+              <option value="Bitupita">Bitupita</option>
+              <option value="Prea">Prea</option>
+              <option value="Várias">Várias</option>
+            </select>
           </div>
 
           {/* Checkbox */}

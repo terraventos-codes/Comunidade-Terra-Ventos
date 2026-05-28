@@ -1,5 +1,34 @@
 import { NextResponse } from "next/server";
 
+/**
+ * Normaliza um número de telefone para o formato E.164 exigido pela Brevo.
+ * Exemplos aceitos: "(85) 99999-9999", "85999999999", "+5585999999999"
+ * Retorna null se o número for inválido.
+ */
+function formatPhone(raw: string): string | null {
+  if (!raw) return null;
+
+  // Remove tudo que não for dígito
+  const digits = raw.replace(/\D/g, "");
+
+  // Já tem DDI 55 + DDD + número: 12 (fixo) ou 13 (celular) dígitos
+  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
+    return `+${digits}`;
+  }
+
+  // Número brasileiro sem DDI: 10 (fixo) ou 11 dígitos (celular)
+  if (digits.length === 10 || digits.length === 11) {
+    return `+55${digits}`;
+  }
+
+  // Número internacional genérico (7-15 dígitos)
+  if (digits.length >= 7 && digits.length <= 15) {
+    return `+${digits}`;
+  }
+
+  return null;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -26,17 +55,35 @@ export async function POST(req: Request) {
       );
     }
 
-    const payload = {
+    const formattedPhone = formatPhone(body.mobile_phone || "");
+    console.log("[brevo] formatted phone:", formattedPhone);
+
+    // Separa o nome completo em primeiro e sobrenome
+    const fullName = (body.name || "").trim();
+    const spaceIdx = fullName.indexOf(" ");
+    const firstName = spaceIdx > -1 ? fullName.slice(0, spaceIdx) : fullName;
+    const lastName = spaceIdx > -1 ? fullName.slice(spaceIdx + 1) : "";
+
+    const attributes: Record<string, string> = {
+      NOME: firstName,       // campo nativo da conta Brevo (field_key: firstname)
+      SOBRENOME: lastName,   // campo nativo da conta Brevo (field_key: lastname)
+      PAIS_ESTADO: body.paisEstado || "",
+      INVESTMENT_RANGE: body.investment_range || "",
+      MAIN_INTEREST: body.main_interest || "",
+      REGION_INTEREST: body.region_interest || "",
+      CALENDAR_DATE: body.calendar_date || "",
+    };
+
+    // Só inclui SMS se o número for válido (evita erro 400 da Brevo)
+    if (formattedPhone) {
+      attributes.SMS = formattedPhone;
+    }
+
+    const payload: Record<string, unknown> = {
       email: body.email,
       listIds: [Number(BREVO_LIST_ID)],
-      attributes: {
-        FIRSTNAME: body.name || "",
-        SMS: body.mobile_phone || "",
-        PAIS_ESTADO: body.paisEstado || "",
-        INVESTMENT_RANGE: body.investment_range || "",
-        MAIN_INTEREST: body.main_interest || "",
-        CALENDAR_DATE: body.calendar_date || "",
-      },
+      updateEnabled: true, // atualiza o contato se o email já existir
+      attributes,
     };
 
     console.log("[brevo] payload:", JSON.stringify(payload));
