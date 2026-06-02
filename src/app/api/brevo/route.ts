@@ -88,6 +88,27 @@ export async function POST(req: Request) {
 
     console.log("[brevo] payload:", JSON.stringify(payload));
 
+    // ── Verificar se o telefone já existe na Brevo ──────────────────────────
+    let phoneAlreadyExists = false;
+    if (formattedPhone) {
+      try {
+        const phoneCheckRes = await fetch(
+          `https://api.brevo.com/v3/contacts/${encodeURIComponent(formattedPhone)}?identifierType=SMS_NUMBER`,
+          {
+            method: "GET",
+            headers: { "api-key": BREVO_API_KEY },
+          },
+        );
+        if (phoneCheckRes.ok) {
+          phoneAlreadyExists = true;
+          console.log("[brevo] phone already registered:", formattedPhone);
+        }
+      } catch {
+        // ignora erro de lookup — não bloqueia o cadastro
+      }
+    }
+
+    // ── Criar / atualizar contato na Brevo ───────────────────────────────────
     const brevoRes = await fetch("https://api.brevo.com/v3/contacts", {
       method: "POST",
       headers: {
@@ -120,8 +141,16 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log("[brevo] contact created successfully", responseJson);
-    return NextResponse.json({ success: true, brevo_response: responseJson });
+    // 201 = novo contato criado | 204 = contato existente atualizado
+    const emailAlreadyExists = brevoRes.status === 204;
+    console.log("[brevo] contact saved. emailAlreadyExists:", emailAlreadyExists, "phoneAlreadyExists:", phoneAlreadyExists);
+
+    return NextResponse.json({
+      success: true,
+      emailAlreadyExists,
+      phoneAlreadyExists,
+      brevo_response: responseJson,
+    });
   } catch (err: any) {
     console.error("[brevo] internal error:", err);
     return NextResponse.json(

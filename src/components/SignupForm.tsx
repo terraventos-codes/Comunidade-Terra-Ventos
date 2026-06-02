@@ -31,7 +31,7 @@ export default function SignupForm({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<
-    "idle" | "success" | "error"
+    "idle" | "success" | "error" | "email_exists" | "phone_exists" | "already_registered"
   >("idle");
 
   const handleInputChange = (
@@ -88,13 +88,18 @@ export default function SignupForm({
         body: JSON.stringify(brevoPayload),
       });
 
-      if (!brevoRes.ok) {
-        const errorBody = await brevoRes.text();
-        throw new Error(`Brevo API falhou: ${brevoRes.status} - ${errorBody}`);
-      }
+      const data = await brevoRes.json();
 
-      // UI de sucesso
-      setSubmitStatus("success");
+      // Detecta duplicatas e exibe mensagem adequada
+      if (data.emailAlreadyExists && data.phoneAlreadyExists) {
+        setSubmitStatus("already_registered");
+      } else if (data.emailAlreadyExists) {
+        setSubmitStatus("email_exists");
+      } else if (data.phoneAlreadyExists) {
+        setSubmitStatus("phone_exists");
+      } else {
+        setSubmitStatus("success");
+      }
 
       setTimeout(() => {
         setSubmitStatus("idle");
@@ -162,13 +167,45 @@ export default function SignupForm({
         transition={{ duration: 1.2, delay: 0.4 }}
       >
         {submitStatus === "success" && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+            <span className="text-green-500 text-xl mt-0.5">✅</span>
             <p className="text-green-700 font-medium">{t("signup.success")}</p>
           </div>
         )}
 
+        {submitStatus === "email_exists" && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-lg flex items-start gap-3">
+            <span className="text-amber-500 text-xl mt-0.5">📧</span>
+            <div>
+              <p className="text-amber-800 font-semibold">Este e-mail já está cadastrado!</p>
+              <p className="text-amber-700 text-sm mt-1">Seus dados foram atualizados com sucesso. Em breve nossa equipe entrará em contato.</p>
+            </div>
+          </div>
+        )}
+
+        {submitStatus === "phone_exists" && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-lg flex items-start gap-3">
+            <span className="text-amber-500 text-xl mt-0.5">📱</span>
+            <div>
+              <p className="text-amber-800 font-semibold">Este telefone já está cadastrado!</p>
+              <p className="text-amber-700 text-sm mt-1">Seus dados foram atualizados com sucesso. Em breve nossa equipe entrará em contato.</p>
+            </div>
+          </div>
+        )}
+
+        {submitStatus === "already_registered" && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-300 rounded-lg flex items-start gap-3">
+            <span className="text-blue-500 text-xl mt-0.5">ℹ️</span>
+            <div>
+              <p className="text-blue-800 font-semibold">Você já faz parte da comunidade!</p>
+              <p className="text-blue-700 text-sm mt-1">Seu e-mail e telefone já estão cadastrados. Seus dados foram atualizados e nossa equipe já tem seu contato.</p>
+            </div>
+          </div>
+        )}
+
         {submitStatus === "error" && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <span className="text-red-500 text-xl mt-0.5">❌</span>
             <p className="text-red-700 font-medium">{t("signup.error")}</p>
           </div>
         )}
