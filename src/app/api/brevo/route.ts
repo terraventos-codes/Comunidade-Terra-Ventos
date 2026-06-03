@@ -2,31 +2,47 @@ import { NextResponse } from "next/server";
 
 /**
  * Normaliza um número de telefone para o formato E.164 exigido pela Brevo.
- * Exemplos aceitos: "(85) 99999-9999", "85999999999", "+5585999999999"
- * Retorna null se o número for inválido.
+ *
+ * Aceita qualquer variação que o usuário possa digitar:
+ *   "+55 (85) 9 9999-9999"  → "+5585999999999"
+ *   "(85) 99999-9999"       → "+5585999999999"
+ *   "85999999999"           → "+5585999999999"
+ *   "+1 (305) 555-1234"     → "+13055551234"
+ *   "+351 912 345 678"      → "+351912345678"
+ *
+ * Retorna null se o número tiver menos de 7 dígitos (inválido).
  */
 function formatPhone(raw: string): string | null {
-  if (!raw) return null;
+  if (!raw || !raw.trim()) return null;
+
+  const trimmed = raw.trim();
+
+  // Detecta se o número já vem com "+" no início (DDI explícito)
+  const hasExplicitDDI = trimmed.startsWith("+");
 
   // Remove tudo que não for dígito
-  const digits = raw.replace(/\D/g, "");
+  const digits = trimmed.replace(/\D/g, "");
 
-  // Já tem DDI 55 + DDD + número: 12 (fixo) ou 13 (celular) dígitos
-  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
+  if (digits.length < 7) return null; // muito curto para ser válido
+  if (digits.length > 15) return null; // excede limite E.164
+
+  // Se o número já vinha com "+", confiamos que os dígitos incluem o DDI
+  if (hasExplicitDDI) {
     return `+${digits}`;
   }
 
-  // Número brasileiro sem DDI: 10 (fixo) ou 11 dígitos (celular)
+  // Número brasileiro sem DDI: 10 (fixo) ou 11 dígitos (celular com 9)
   if (digits.length === 10 || digits.length === 11) {
     return `+55${digits}`;
   }
 
-  // Número internacional genérico (7-15 dígitos)
-  if (digits.length >= 7 && digits.length <= 15) {
+  // Número que começa com DDI 55 (Brasil) + DDD + número
+  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
     return `+${digits}`;
   }
 
-  return null;
+  // Qualquer outro número internacional: assume que os dígitos já incluem DDI
+  return `+${digits}`;
 }
 
 export async function POST(req: Request) {
